@@ -86,8 +86,21 @@ public class ReportContentUtil {
       for ( final ParameterDefinitionEntry param : params ) {
         final String paramName = param.getName();
         try {
+          Object value = inputs.get( paramName );
+          if ( value == null && ReportContentUtil.isAllowMultiSelect( param ) ) {
+            if ( param.getDefaultValue( context ) != null ) {
+              Object defaultValue = param.getDefaultValue( context );
+              if ( defaultValue.getClass().isArray() ) {
+                value = defaultValue;            	              	  
+              } else {
+                String s = (String) defaultValue;
+                String[] result = s.split( "," );
+                value = result;
+              }              
+            }  
+          }
           final Object computedParameter =
-              ReportContentUtil.computeParameterValue( context, param, inputs.get( paramName ) );
+              ReportContentUtil.computeParameterValue( context, param, value );
           parameterValues.put( param.getName(), computedParameter );
           if ( log.isInfoEnabled() ) {
             log.info( Messages.getInstance().getString( "ReportPlugin.infoParameterValues", //$NON-NLS-1$
