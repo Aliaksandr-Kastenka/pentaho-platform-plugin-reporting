@@ -26,6 +26,13 @@ import junit.framework.TestCase;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
+import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
+import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
+import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
+import org.pentaho.reporting.platform.plugin.output.CachingPageableHTMLOutput;
+import org.pentaho.reporting.platform.plugin.output.FastExportReportOutputHandlerFactory;
+import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerFactory;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 
 public class PageableHTMLIT extends TestCase {
@@ -38,6 +45,7 @@ public class PageableHTMLIT extends TestCase {
     tmp.mkdirs();
 
     microPlatform = MicroPlatformFactory.create();
+    microPlatform.define( ReportOutputHandlerFactory.class, FastExportReportOutputHandlerFactory.class );
     microPlatform.start();
 
     IPentahoSession session = new StandaloneSession();
@@ -114,4 +122,54 @@ public class PageableHTMLIT extends TestCase {
 
   }
 
+  public void testCaching() throws Exception {
+
+    ModifiableConfiguration edConf = ClassicEngineBoot.getInstance().getEditableConfig();
+    edConf.setConfigProperty("org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent", "true");
+    try {
+
+      ResourceManager mgr = new ResourceManager();
+      File src = new File("resource/solution/test/reporting/report.prpt");
+      MasterReport r = (MasterReport) mgr.createDirectly(src, MasterReport.class).getResource();
+
+      CachingPageableHTMLOutput out = new CachingPageableHTMLOutput();
+      String key = out.createKey(r);
+
+      // create an instance of the component
+      SimpleReportingComponent rc = new SimpleReportingComponent();
+      // create/set the InputStream
+      rc.setReport(r);
+      rc.setOutputType("text/html"); //$NON-NLS-1$
+
+      // turn on pagination, by way of input (typical mode for xaction)
+      HashMap<String, Object> inputs = new HashMap<String, Object>();
+      inputs.put("paginate", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+      inputs.put("accepted-page", "0"); //$NON-NLS-1$ //$NON-NLS-2$
+      rc.setInputs(inputs);
+
+      FileOutputStream outputStream = new FileOutputStream(new File(tmp, System.currentTimeMillis() + ".html")); //$NON-NLS-1$ //$NON-NLS-2$
+      rc.setOutputStream(outputStream);
+
+      // execute the component
+      assertTrue(rc.execute());
+
+      // make sure this report has 8 pages (we know this report will produce 8 pages with sample data)
+      assertEquals(8, rc.getPageCount());
+
+      // Check caching: PageNumbers
+      assertEquals(Integer.valueOf(8), out.getPageCount(key));
+      assertTrue(out.getPage(key, 0) != null);
+      assertTrue(out.getPage(key, 1) != null);
+      assertTrue(out.getPage(key, 2) != null);
+      assertTrue(out.getPage(key, 3) != null);
+      assertTrue(out.getPage(key, 4) != null);
+      assertTrue(out.getPage(key, 5) != null);
+      assertTrue(out.getPage(key, 6) != null);
+      assertTrue(out.getPage(key, 7) != null);
+      assertTrue(out.getPage(key, 8) == null);
+    }
+    finally {
+      edConf.setConfigProperty("org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent", null);
+    }
+  }
 }
