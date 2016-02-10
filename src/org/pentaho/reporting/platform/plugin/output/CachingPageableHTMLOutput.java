@@ -87,7 +87,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
       final Integer pageCount = getPageCount(key);
       if (pageCount == null) {
         logger.warn("No cached page count for " + key);
-        final PageResult data = regenerateCache(report, acceptedPage, key, yieldRate);
+        final PageResult data = regenerateCache(report, yieldRate, key, acceptedPage);
         outputStream.write(data.data);
         outputStream.flush();
         return data.pageCount;
@@ -102,7 +102,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
       }
 
 
-      final PageResult data = regenerateCache(report, acceptedPage, key, yieldRate);
+      final PageResult data = regenerateCache(report, yieldRate, key, acceptedPage);
       outputStream.write(data.data);
       outputStream.flush();
       return data.pageCount;
