@@ -47,6 +47,7 @@ import java.util.concurrent.Future;
  * Created by dima.prokopenko@gmail.com on 2/8/2016.
  */
 @Path( "/reporting/api/jobs" ) public class JobManager {
+	public JobManager(){}
 
   private static final Log logger = LogFactory.getLog( JobManager.class );
 
