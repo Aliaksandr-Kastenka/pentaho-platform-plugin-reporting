@@ -32,10 +32,17 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  */
 class AsyncReportStatusListener implements IAsyncReportListener, ReportProgressListener, IAsyncReportState {
 
+  public static final String COMPUTING_LAYOUT = "async_computing_layout_title";
+  public static final String PRECOMPUTING_VALUES = "async_precomputing_values_title";
+  public static final String PAGINATING = "async_paginating_title";
+  public static final String GENERATING_CONTENT = "async_generating_content_title";
+
   private String path;
   private UUID uuid;
   private AsyncExecutionStatus status = AsyncExecutionStatus.QUEUED;
   private int progress = 0;
+  private int page = 0;
+  private String activity;
 
   private Queue<ReportProgressEvent> events = new ConcurrentLinkedQueue<>();
 
@@ -77,6 +84,22 @@ class AsyncReportStatusListener implements IAsyncReportListener, ReportProgressL
     this.progress = progress;
   }
 
+  @Override public int getPage() {
+    return page;
+  }
+
+  @Override public void setPage( int page ) {
+    this.page = page;
+  }
+
+  @Override public String getActivity() {
+    return activity;
+  }
+
+  @Override public void setActivity( String activity ) {
+    this.activity = activity;
+  }
+
   @Override
   public String getMimeType() {
     return this.mimeType;
@@ -89,7 +112,9 @@ class AsyncReportStatusListener implements IAsyncReportListener, ReportProgressL
 
   @Override
   public void reportProcessingUpdate( ReportProgressEvent event ) {
-    events.add( event );
+    this.activity = getActivityCode( event.getActivity() );
+    this.progress = (int) ReportProgressEvent.computePercentageComplete( event, true );
+    this.page = event.getPage();
   }
 
   @Override
@@ -97,13 +122,53 @@ class AsyncReportStatusListener implements IAsyncReportListener, ReportProgressL
     events.add( event );
   }
 
+  // is not thread safe but we don't need it
+  @Override
+  public AsyncReportState clone() {
+    AsyncReportStatusListener clone =
+      new AsyncReportStatusListener( path, UUID.fromString( this.uuid.toString() ), mimeType );
+    clone.setStatus( this.status );
+    clone.setProgress( this.progress );
+    clone.setPage( this.page );
+    clone.setActivity( this.activity );
+
+    return clone;
+  }
+
   @Override
   public String toString() {
     return "AsyncReportStatusListener{"
-        + "path='" + path + '\''
-        + ", uuid=" + uuid
-        + ", status=" + status
-        + ", progress=" + progress
-        + '}';
+      + "path='" + path + '\''
+      + ", uuid=" + uuid
+      + ", status=" + status
+      + ", progress=" + progress
+      + ", page=" + page
+      + ", activity=" + activity
+      + '}';
+  }
+
+  private String getActivityCode( int activity ) {
+    String result = "";
+
+    switch ( activity ) {
+      case ReportProgressEvent.COMPUTING_LAYOUT: {
+        result = COMPUTING_LAYOUT;
+        break;
+      }
+      case ReportProgressEvent.PRECOMPUTING_VALUES: {
+        result = PRECOMPUTING_VALUES;
+        break;
+      }
+      case ReportProgressEvent.PAGINATING: {
+        result = PAGINATING;
+        break;
+      }
+      case ReportProgressEvent.GENERATING_CONTENT: {
+        result = GENERATING_CONTENT;
+        break;
+      }
+    }
+
+    return result;
   }
 }

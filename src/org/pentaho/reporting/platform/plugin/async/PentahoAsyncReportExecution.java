@@ -50,6 +50,7 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
     listener.setStatus( AsyncExecutionStatus.WORKING );
 
     final MasterReport report = reportComponent.getReport();
+    report.addReportProgressListener( listener );
 
     //async is always fully buffered
     report.getReportConfiguration().setConfigProperty( ExecuteReportContentHandler.FORCED_BUFFERED_WRITING, "false" );
