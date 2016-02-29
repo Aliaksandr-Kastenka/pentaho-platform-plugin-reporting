@@ -44,9 +44,9 @@ class AsyncReportStatusListener implements IAsyncReportListener, ReportProgressL
   private int page = 0;
   private String activity;
 
-  private Queue<ReportProgressEvent> events = new ConcurrentLinkedQueue<>();
-
   private String mimeType;
+
+  private boolean firstPageMode = false;
 
   public AsyncReportStatusListener( String path, UUID uuid, String mimeType ) {
     this.path = path;
@@ -107,24 +107,34 @@ class AsyncReportStatusListener implements IAsyncReportListener, ReportProgressL
 
   @Override
   public void reportProcessingStarted( ReportProgressEvent event ) {
-    events.add( event );
+    this.status = AsyncExecutionStatus.WORKING;
   }
 
   @Override
   public void reportProcessingUpdate( ReportProgressEvent event ) {
-    this.activity = getActivityCode( event.getActivity() );
+    final int activity = event.getActivity();
+    this.activity = getActivityCode( activity );
     this.progress = (int) ReportProgressEvent.computePercentageComplete( event, true );
-    this.page = event.getPage();
+    final int page = event.getPage();
+    this.page = page;
+    if( firstPageMode && ReportProgressEvent.GENERATING_CONTENT == activity && page > 0 ){
+      //First page is ready here
+      this.status = AsyncExecutionStatus.CONTENT_AVAILABLE;
+    }
   }
 
   @Override
   public void reportProcessingFinished( ReportProgressEvent event ) {
-    events.add( event );
+    this.status = AsyncExecutionStatus.FINISHED;
+  }
+
+  public void setFirstPageMode( final boolean firstPageMode ) {
+    this.firstPageMode = firstPageMode;
   }
 
   // is not thread safe but we don't need it
   @Override
-  public AsyncReportState clone() {
+  public IAsyncReportState clone() {
     AsyncReportStatusListener clone =
       new AsyncReportStatusListener( path, UUID.fromString( this.uuid.toString() ), mimeType );
     clone.setStatus( this.status );

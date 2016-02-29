@@ -116,6 +116,14 @@ public class JobManagerTest extends JaxRsServerProvider {
         return PROGRESS;
       }
 
+      @Override public int getPage() {
+        return 0;
+      }
+
+      @Override public String getActivity() {
+        return null;
+      }
+
       @Override public String getMimeType() {
         return MIME;
       }
