@@ -21,9 +21,7 @@ package org.pentaho.reporting.platform.plugin.async;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 
-import java.util.Queue;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Simple bean with async execution status
@@ -42,13 +40,14 @@ class AsyncReportStatusListener implements IAsyncReportListener, ReportProgressL
   private AsyncExecutionStatus status = AsyncExecutionStatus.QUEUED;
   private int progress = 0;
   private int page = 0;
+  private int row = 0;
   private String activity;
 
   private String mimeType;
 
   private boolean firstPageMode = false;
 
-  public AsyncReportStatusListener( String path, UUID uuid, String mimeType ) {
+  public AsyncReportStatusListener( final String path, final UUID uuid, final String mimeType ) {
     this.path = path;
     this.uuid = uuid;
     this.mimeType = mimeType;
@@ -70,7 +69,7 @@ class AsyncReportStatusListener implements IAsyncReportListener, ReportProgressL
   }
 
   @Override
-  public void setStatus( AsyncExecutionStatus status ) {
+  public void setStatus( final AsyncExecutionStatus status ) {
     this.status = status;
   }
 
@@ -80,7 +79,7 @@ class AsyncReportStatusListener implements IAsyncReportListener, ReportProgressL
   }
 
   @Override
-  public void setProgress( int progress ) {
+  public void setProgress( final int progress ) {
     this.progress = progress;
   }
 
@@ -88,15 +87,24 @@ class AsyncReportStatusListener implements IAsyncReportListener, ReportProgressL
     return page;
   }
 
-  @Override public void setPage( int page ) {
+  @Override public void setPage( final int page ) {
     this.page = page;
+  }
+
+  @Override
+  public void setRow( final int row ) {
+    this.row = row;
+  }
+
+  @Override public int getRow() {
+    return row;
   }
 
   @Override public String getActivity() {
     return activity;
   }
 
-  @Override public void setActivity( String activity ) {
+  @Override public void setActivity( final String activity ) {
     this.activity = activity;
   }
 
@@ -106,58 +114,57 @@ class AsyncReportStatusListener implements IAsyncReportListener, ReportProgressL
   }
 
   @Override
-  public void reportProcessingStarted( ReportProgressEvent event ) {
+  public synchronized void reportProcessingStarted( final ReportProgressEvent event ) {
     this.status = AsyncExecutionStatus.WORKING;
   }
 
   @Override
-  public void reportProcessingUpdate( ReportProgressEvent event ) {
-    final int activity = event.getActivity();
-    this.activity = getActivityCode( activity );
-    this.progress = (int) ReportProgressEvent.computePercentageComplete( event, true );
-    final int page = event.getPage();
-    this.page = page;
-    if( firstPageMode && ReportProgressEvent.GENERATING_CONTENT == activity && page > 0 ){
-      //First page is ready here
-      this.status = AsyncExecutionStatus.CONTENT_AVAILABLE;
-    }
+  public synchronized void reportProcessingUpdate( final ReportProgressEvent event ) {
+      final int activity = event.getActivity();
+      if( firstPageMode && ReportProgressEvent.GENERATING_CONTENT == activity && page > 0 ){
+        //First page is ready here
+        this.status = AsyncExecutionStatus.CONTENT_AVAILABLE;
+      }
+      this.activity = getActivityCode( activity );
+      this.progress = (int) ReportProgressEvent.computePercentageComplete( event, true );
+      this.page = event.getPage();
+      this.row = event.getRow();
   }
 
   @Override
-  public void reportProcessingFinished( ReportProgressEvent event ) {
+  public synchronized void reportProcessingFinished( final ReportProgressEvent event ) {
     this.status = AsyncExecutionStatus.FINISHED;
   }
 
-  public void setFirstPageMode( final boolean firstPageMode ) {
+  public synchronized void setFirstPageMode( final boolean firstPageMode ) {
     this.firstPageMode = firstPageMode;
   }
 
-  // is not thread safe but we don't need it
   @Override
-  public IAsyncReportState clone() {
-    AsyncReportStatusListener clone =
-      new AsyncReportStatusListener( path, UUID.fromString( this.uuid.toString() ), mimeType );
-    clone.setStatus( this.status );
-    clone.setProgress( this.progress );
-    clone.setPage( this.page );
-    clone.setActivity( this.activity );
-
-    return clone;
+  public synchronized IAsyncReportState clone() {
+      final AsyncReportStatusListener clone =
+        new AsyncReportStatusListener( path, UUID.fromString( this.uuid.toString() ), mimeType );
+      clone.setStatus( this.status );
+      clone.setProgress( this.progress );
+      clone.setPage( this.page );
+      clone.setRow( this.row );
+      clone.setActivity( this.activity );
+      return clone;
   }
 
-  @Override
-  public String toString() {
-    return "AsyncReportStatusListener{"
-      + "path='" + path + '\''
-      + ", uuid=" + uuid
-      + ", status=" + status
-      + ", progress=" + progress
-      + ", page=" + page
-      + ", activity=" + activity
-      + '}';
+  @Override public String toString() {
+    return "AsyncReportStatusListener{" +
+      "path='" + path + '\'' +
+      ", uuid=" + uuid +
+      ", status=" + status +
+      ", progress=" + progress +
+      ", page=" + page +
+      ", row=" + row +
+      ", activity='" + activity + '\'' +
+      '}';
   }
 
-  private String getActivityCode( int activity ) {
+  private static String getActivityCode( final int activity ) {
     String result = "";
 
     switch ( activity ) {
