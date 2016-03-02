@@ -127,6 +127,10 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
       final byte[] page = cachedContent.getPageData( acceptedPage );
       if ( page != null && page.length > 0 ) {
         logger.warn( "Using cached report data for " + key );
+        final ReportProgressListener listener = ReportListenerThreadHolder.getListener();
+        if ( listener != null ) {
+          listener.reportProcessingFinished( new ReportProgressEvent( "Cache", ReportProgressEvent.GENERATING_CONTENT, 0, 0, cachedContent.getPageCount(), 0, 0  ) );
+        }
         outputStream.write( page );
         outputStream.flush();
         return cachedContent.getPageCount();

@@ -133,6 +133,11 @@ class AsyncReportStatusListener implements IAsyncReportListener, ReportProgressL
 
   @Override
   public synchronized void reportProcessingFinished( final ReportProgressEvent event ) {
+    final int activity = event.getActivity();
+    this.activity = getActivityCode( activity );
+    this.progress = (int) ReportProgressEvent.computePercentageComplete( event, true );
+    this.page = event.getPage();
+    this.row = event.getRow();
     this.status = AsyncExecutionStatus.FINISHED;
   }
 
