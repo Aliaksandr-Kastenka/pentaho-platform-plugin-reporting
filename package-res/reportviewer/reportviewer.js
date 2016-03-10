@@ -43,6 +43,12 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         return _reportPrompt;
       },
       _isAsync: null,
+      _cancelUrl: null,
+	  _reportStatus: null,
+	  _isCanceled: null,
+	  _currentUrl: null,
+	  _currentUuid: null,
+	  _firstIframeUrlSet: null,
 
       load: function() {
         _Messages.addUrlBundle('reportviewer', CONTEXT_PATH+'i18n?plugin=reporting&name=reportviewer/messages/messages');
@@ -73,6 +79,32 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         on(registry.byId('toolbar-parameterToggle'),  "click", lang.hitch( this,  function() {
           this.view.togglePromptPanel();
         }));
+
+        window.onbeforeunload = function(e) {
+          var handleCancelCallback = dojo.hitch(this, function(result) {
+            this._isCanceled = true;
+          });
+		  if(this._reportStatus != "FINISHED") {
+            pentahoGet(this._currentUrl.substring(0, this._currentUrl.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + this._currentUuid + '/cancel', "", handleCancelCallback);
+		  }
+          return;
+        };
+
+        $("#reportContent")[0].contentWindow.onbeforeunload = function(e) {
+          var handleCancelCallback = dojo.hitch(this, function(result) {
+            this._isCanceled = true;
+          });
+		  if(this._firstIframeUrlSet == true) {
+            //user clicking a link in the report
+            if(this._reportStatus != "FINISHED") {
+              pentahoGet(this._currentUrl.substring(0, this._currentUrl.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + this._currentUuid + '/cancel', "", handleCancelCallback);
+            }
+		  } else {
+            //content is writing in the reportContent iframe first time
+            this._firstIframeUrlSet = true;
+		  }
+          return;
+        };
 
         var boundOnReportContentLoaded = this._onReportContentLoaded.bind(this);
 
@@ -780,17 +812,18 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         var options = me._buildReportContentOptions();
         var url = me._buildReportContentUrl(options);
+		this._currentUrl = url;
 
         //BISERVER-1225
         if (this._isAsync === null) {
-          this._isAsync = (pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/isasync', "") == "true");
+          this._isAsync = (pentahoGet(this._currentUrl.substring(0, this._currentUrl.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/isasync', "") == "true");
         }
         var currentUuid;
-        var isCanceled = false;
+        this._isCanceled = false;
         if(this._isAsync) {
           var dlg = registry.byId('feedbackScreen');
           var handleCancelCallback = dojo.hitch(this, function(result) {
-            isCanceled = true;
+            this._isCanceled = true;
           });
           dlg.setTitle('Report Processing Feedback');
           dlg.setText('Pass:');
@@ -801,7 +834,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + currentUuid + '/cancel', "", handleCancelCallback);
             dlg.hide();
           }];
-          if( url.indexOf("debug=true") == -1 ) {
+          if( this._currentUrl.indexOf("debug=true") == -1 ) {
             dlg.show();
           }
         }
@@ -829,7 +862,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         if(this._isAsync) {
           var handleResultCallback = dojo.hitch(this, function(result) {
-            if(!isCanceled) {
+            if(!this._isCanceled) {
               var resultJson;
               try {
                 resultJson = JSON.parse(result);
@@ -844,17 +877,24 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
               }
               if(resultJson.status != null) {
                 dlg.setText2(resultJson.status);
-                currentUuid = resultJson.uuid;
+				this._reportStatus = resultJson.status;
+				currentUuid = this._currentUuid = resultJson.uuid;
+                //this._currentUuid = resultJson.uuid;
+
+                if(this._cancelUrl === null) {
+                  this._cancelUrl = this._currentUrl.substring(0, this._currentUrl.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + this._currentUuid + '/cancel';
+                  window.parent.mantle_addHandler(this._cancelUrl);
+                }
 
                 progressBar.set({value: resultJson.progress});
 
                 if(resultJson.status == "QUEUED" || resultJson.status == "WORKING") {
-                  var urlStatus = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson.uuid + '/status';
+                  var urlStatus = this._currentUrl.substring(0, this._currentUrl.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson.uuid + '/status';
                   setTimeout(function(){ pentahoGet(urlStatus, "", handleResultCallback); }, 1000);
                 } else if (resultJson.status == "CONTENT_AVAILABLE") {
                   //first page
                 } else if (resultJson.status == "FINISHED") {
-                  var urlContent = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson.uuid + '/content';
+                  var urlContent = this._currentUrl.substring(0, this._currentUrl.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson.uuid + '/content';
                   logger && logger.log("Will set iframe url to " + urlContent.substr(0, 50) + "... ");
 
                   $('#hiddenReportContentForm').attr("action", urlContent);
@@ -875,15 +915,15 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             }
           });
 
-          pentahoGet('reportjob', url.substring(url.lastIndexOf("/report?")+"/report?".length, url.length), handleResultCallback, 'text/text');
+          pentahoGet('reportjob', this._currentUrl.substring(this._currentUrl.lastIndexOf("/report?")+"/report?".length, this._currentUrl.length), handleResultCallback, 'text/text');
         } else {
-          logger && logger.log("Will set iframe url to " + url.substr(0, 50) + "... ");
+          logger && logger.log("Will set iframe url to " + this._currentUrl.substr(0, 50) + "... ");
           //submit hidden form to POST data to iframe
-          $('#hiddenReportContentForm').attr("action", url);
+          $('#hiddenReportContentForm').attr("action", this._currentUrl);
           $('#hiddenReportContentForm').submit();
           //set data attribute so that we know what url is currently displayed in
           //the iframe without actually triggering a GET
-          $('#reportContent').attr("data-src", url);
+          $('#reportContent').attr("data-src", this._currentUrl);
           this._updatedIFrameSrc = true;
         }
 
