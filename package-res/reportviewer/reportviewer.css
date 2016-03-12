@@ -364,7 +364,7 @@ div.prompt-panel {
 .feedbackscreen-content {
   /* fallback color */
   background: #f5f6f8;
-  width: 460px !important;
+  width: 360px !important;
 }
 
 .feedbackscreentitle {

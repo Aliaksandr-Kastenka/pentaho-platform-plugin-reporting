@@ -813,8 +813,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           var handleCancelCallback = dojo.hitch(this, function(result) {
             isCanceled = true;
           });
-          dlg.setTitle('Report Processing Feedback');
-          dlg.setText('Pass:');
+          dlg.setTitle('Just a few moments please.');
+          dlg.setText('We are generating your report...');
           dlg.setText2('Page:');
           dlg.setText3('Row:');
           dlg.setButtonText( 'Cancel' );
@@ -864,7 +864,11 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                 return;
               }
               if(resultJson.status != null) {
-                dlg.setText2(resultJson.status);
+                if(resultJson.activity != null) {
+                  dlg.setText('Pass:' + _Messages.getString(resultJson.activity));
+                }
+                dlg.setText2('Page:' + resultJson.page + '/' + resultJson.totalPages);
+                dlg.setText3('Row:' + resultJson.row + '/' + resultJson.totalRows);
                 currentUuid = resultJson.uuid;
 
                 progressBar.set({value: resultJson.progress});
