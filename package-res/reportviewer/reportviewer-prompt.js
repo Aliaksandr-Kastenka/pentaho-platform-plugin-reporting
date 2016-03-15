@@ -275,8 +275,9 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
           me.hideGlassPane();
         }
 
+        var curUrl = window.location.href.split('?')[0];
         if (this._isAsync === null) {
-          this._isAsync = (pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/isasync', "") == "true");
+          this._isAsync = (pentahoGet(curUrl.substring(0, curUrl.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/isasync', "") == "true");
         }
 
         if(me.clicking) {
@@ -315,11 +316,6 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
 
           // Another request was made after this one, so this one is ignored.
           if(fetchParamDefId !== me._fetchParamDefId) { return; }
-
-          var _isAsync = false;
-          if(pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/isasync', "") == "true"){
-                _isAsync = true;
-          }
 
           try {
             callback(xmlString);
