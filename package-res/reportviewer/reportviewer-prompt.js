@@ -79,7 +79,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
             //
             // [PIR-1163] Used 'inSchedulerDialog' variable to make sure that the second request is not sent if it's scheduler dialog.
             // Because the scheduler needs only parameters without full XML.
-            if ( (typeof inSchedulerDialog === "undefined" || !inSchedulerDialog) && this.mode === 'INITIAL' && paramDefn.allowAutoSubmit()) {
+            if ( (typeof inSchedulerDialog === "undefined" || !inSchedulerDialog) && this.mode === 'INITIAL' && paramDefn.allowAutoSubmit() && !me._isAsync) {
               this.fetchParameterDefinition(paramDefnCallback.bind(this), 'MANUAL');
               return;
             }
@@ -290,6 +290,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
           if (me.panel) { me.panel.forceAutoSubmit = upgrade; }
 
           delete me.clicking;
+          delete me.clicking;
         }
 
         // Store mode so we can check if we need to refresh the report content or not in the view
@@ -344,6 +345,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
       },
 
       _getParameterDefinitionRenderMode: function(promptMode) {
+        var me = this;
         switch(promptMode) {
           case 'INITIAL':
               return 'PARAMETER';
@@ -355,7 +357,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
             break;
         }
 
-        return 'XML';
+        return 'XML' ;
       },
 
       getParameterUrl: function() {
