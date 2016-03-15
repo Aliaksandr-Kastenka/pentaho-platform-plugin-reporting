@@ -135,12 +135,17 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
   }
 
   @Override
-  public synchronized int generate( final MasterReport report, final int acceptedPage,
+  public synchronized int generate( final MasterReport report, int acceptedPage,
                                     final OutputStream outputStream, final int yieldRate )
     throws ReportProcessingException, IOException, ContentIOException {
 
     if ( acceptedPage < 0 ) {
-      return generateNonCaching( report, acceptedPage, outputStream, yieldRate );
+      final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
+      if ( listener != null && listener.isFirstPageMode() ) {
+        acceptedPage = 0;
+      } else {
+        return generateNonCaching( report, acceptedPage, outputStream, yieldRate );
+      }
     }
 
     try {
