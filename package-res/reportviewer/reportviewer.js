@@ -644,6 +644,13 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           window.reportViewer_openUrlInDialog = top.reportViewer_openUrlInDialog;
         }
 
+        top.mantle_addHandler("tabClosing", function (paramJson) {
+        console.log("checking1");
+        if (paramJson.tabId == "myId") {
+          console.log("checking2");
+        }
+      });
+
         window.reportViewer_hide = this.hide.bind(this);
 
         var localThis = this;
@@ -854,6 +861,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                 } else if (resultJson.status == "CONTENT_AVAILABLE") {
                   //first page
                 } else if (resultJson.status == "FINISHED") {
+					window.top.mantle_fireEvent('tabClosing', {"tabId": "myId"});
                   var urlContent = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson.uuid + '/content';
                   logger && logger.log("Will set iframe url to " + urlContent.substr(0, 50) + "... ");
 
