@@ -24,6 +24,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
     return logged({
       // The current prompt mode
       mode: 'INITIAL',
+      _isAsync: null,
 
       /**
        * Gets the prompt api instance
@@ -268,6 +269,11 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
           me.hideGlassPane();
         }
 
+        var curUrl = window.location.href.split('?')[0];
+        if (this._isAsync === null) {
+          this._isAsync = (pentahoGet(curUrl.substring(0, curUrl.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/isasync', "") == "true");
+        }
+
         if(me.clicking) {
           // If "Upgrading" a Change to a Submit we do not want to process the next Submit Click, if any
           var upgrade = (promptMode === 'USERINPUT');
@@ -326,7 +332,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
             //
             // [PIR-1163] Used 'inSchedulerDialog' variable to make sure that the second request is not sent if it's scheduler dialog.
             // Because the scheduler needs only parameters without full XML.
-            if( (typeof inSchedulerDialog !== "undefined" && !inSchedulerDialog) && promptMode === 'INITIAL' && newParamDefn.allowAutoSubmit()) {
+            if( (typeof inSchedulerDialog !== "undefined" && !inSchedulerDialog) && promptMode === 'INITIAL' && newParamDefn.allowAutoSubmit() && !me._isAsync) {
               // assert promptPanel == null
               me.fetchParameterDefinition(callback, /*promptMode*/'MANUAL');
               return;
