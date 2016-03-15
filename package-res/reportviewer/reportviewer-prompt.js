@@ -24,6 +24,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
     return logged({
       // The current prompt mode
       mode: 'INITIAL',
+      _isAsync: null,
 
       /**
        * Gets the prompt api instance
@@ -274,7 +275,11 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
           me.hideGlassPane();
         }
 
-        if (me.clicking) {
+        if (this._isAsync === null) {
+          this._isAsync = (pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/isasync', "") == "true");
+        }
+
+        if(me.clicking) {
           // If "Upgrading" a Change to a Submit we do not want to process the next Submit Click, if any
           var upgrade = (promptMode === 'USERINPUT');
 
@@ -309,7 +314,12 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
           if (me.checkSessionTimeout(xmlString, args)) { return; }
 
           // Another request was made after this one, so this one is ignored.
-          if (fetchParamDefId !== me._fetchParamDefId) { return; }
+          if(fetchParamDefId !== me._fetchParamDefId) { return; }
+
+          var _isAsync = false;
+          if(pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/isasync', "") == "true"){
+                _isAsync = true;
+          }
 
           try {
             callback(xmlString);
