@@ -131,10 +131,6 @@ class AsyncReportStatusListener implements IAsyncReportListener, IAsyncReportSta
   @Override
   public synchronized void reportProcessingUpdate( final ReportProgressEvent event ) {
     final int activity = event.getActivity();
-    if ( firstPageMode && ReportProgressEvent.GENERATING_CONTENT == activity && totalPages > 0 ) {
-      //Pages are available now
-      this.status = AsyncExecutionStatus.CONTENT_AVAILABLE;
-    }
     updateState( event, activity );
   }
 
