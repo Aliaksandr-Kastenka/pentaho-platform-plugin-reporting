@@ -97,9 +97,12 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
     }
 
     @Override public void reportProcessingUpdate( final ReportProgressEvent reportProgressEvent ) {
-
+      //When we request X page the accepted-page is X-1
+      //then to be sure that X page is already stored the current page in event should be X+1
+      //in other words acceptedPage + 2
+      final boolean requestedPageIsStored = reportProgressEvent.getPage() == acceptedPage + 2;
       if ( reportProgressEvent.getActivity() == ReportProgressEvent.GENERATING_CONTENT
-        && reportProgressEvent.getPage() == acceptedPage + 1 ) {
+        && requestedPageIsStored ) {
         // we finished pagination, and thus have the page numbers ready.
         // we also have pages in repository
         try {
@@ -139,12 +142,13 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
   }
 
   @Override
-  public synchronized int generate( final MasterReport report, final int acceptedPage,
+  public synchronized int generate( final MasterReport report, /*final*/ int acceptedPage,
                                     final OutputStream outputStream, final int yieldRate )
     throws ReportProcessingException, IOException, ContentIOException {
 
     if ( acceptedPage < 0 ) {
-      return generateNonCaching( report, acceptedPage, outputStream, yieldRate );
+     /* return generateNonCaching( report, acceptedPage, outputStream, yieldRate );*/
+      acceptedPage = 0;
     }
 
     try {
