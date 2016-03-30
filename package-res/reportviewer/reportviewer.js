@@ -613,7 +613,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       }), // end view
 
       onTabCloseEvent: function (event) {
-        if (window && event.eventSubType == 'tabClosing' && event.stringParam == window.frameElement.id) {
+        if (window && window.frameElement && event.eventSubType == 'tabClosing' && event.stringParam == window.frameElement.id) {
           this.cancel(this._currentReportStatus, this._currentReportUuid);
         }
       },
