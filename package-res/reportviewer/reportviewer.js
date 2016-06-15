@@ -910,6 +910,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
               pentahoGet(urlSchedule, "");
               manuallyScheduled = true;
               hideDlgAndPane(registry.byId('feedbackScreen'));
+              window.top.executeCommand("RunInMyBackgroundCommand", this._buildParameter(pathArray, me._currentReportUuid));
             }.bind(me),
             //Cancel report
             function feedbackscreenDone() {
@@ -1241,6 +1242,19 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         }
         this.reportPrompt.hideGlassPane();
       },
+
+      _buildParameter: function (pathArray, id) {
+      var path;
+      for(var i=0; i<pathArray.length; i++) {
+        if(pathArray[i].indexOf(".prpt") !== -1) {
+          path = decodeURIComponent(pathArray[i]).replace(/:/g,"/");
+        }
+      }	  
+      return {
+        solutionPath: (path == null ? "/" : path ),
+        jobId: id		
+      };
+    },
 
       _submitReportEnded: function(isTimeout) {
         // Clear submit-related control flags
