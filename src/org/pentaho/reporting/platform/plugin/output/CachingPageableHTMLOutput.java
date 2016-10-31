@@ -247,7 +247,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
     if ( listener != null ) {
       persistContent( key, result, listener.getTotalRows() );
     } else {
-      persistContent( key, result, report.getQueryLimit() );
+      persistContent( key, result, report.getQueryLimit(null, null) );
     }
 
     return result;
@@ -354,7 +354,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
       sourceKey = computeDefSourceKey( report, definitionSource );
     }
     final HashMap<String, String> params = new HashMap<>();
-    params.put( "query-limit", String.valueOf( report.getQueryLimit() ) );
+    params.put( "query-limit", String.valueOf( report.getQueryLimit(null, null) ) );
     final ReportParameterDefinition parameterDefinition = report.getParameterDefinition();
     final ReportParameterValues parameterValues = report.getParameterValues();
     for ( final ParameterDefinitionEntry p : parameterDefinition.getParameterDefinitions() ) {

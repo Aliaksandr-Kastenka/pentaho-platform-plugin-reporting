@@ -513,7 +513,7 @@ public class JobManager {
         final IAsyncReportState state = this.getReportState();
         final String path = state.getPath();
         final MasterReport report = ReportCreator.createReportByName( path );
-        final int queryLimit = report.getQueryLimit();
+        final int queryLimit = report.getQueryLimit(null, null);
         if ( queryLimit > 0 ) {
           return Boolean.TRUE;
         } else {

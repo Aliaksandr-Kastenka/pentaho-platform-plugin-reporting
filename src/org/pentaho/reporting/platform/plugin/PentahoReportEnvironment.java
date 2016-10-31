@@ -110,7 +110,7 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment {
     }
     if ( session != null ) {
       if ( "username".equals( key ) ) { //$NON-NLS-1$
-        final Authentication authentication = SecurityHelper.getInstance().getAuthentication();
+        final Authentication authentication = null;
         if ( authentication == null ) {
           return null;
         }
@@ -126,7 +126,7 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment {
         cache.put( key, userName );
         return userName;
       } else if ( "roles".equals( key ) ) { //$NON-NLS-1$
-        final Authentication authentication = SecurityHelper.getInstance().getAuthentication();
+        final Authentication authentication = null;
         if ( authentication == null ) {
           return null;
         }
