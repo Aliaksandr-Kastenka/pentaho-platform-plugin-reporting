@@ -458,7 +458,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         if ( inputs.get( ParameterXmlContentHandler.SYS_PARAM_QUERY_LIMIT ) != null ) {
           this.getReport().setQueryLimit(
             checkAndGetUserInputQueryLimit( inputs.get( ParameterXmlContentHandler.SYS_PARAM_QUERY_LIMIT ),
-              this.getReport().getQueryLimit() ) );
+              this.getReport().getQueryLimit( null ) ) );
         }
       } catch ( final Exception e ) {
         log.warn( e.getMessage(), e );

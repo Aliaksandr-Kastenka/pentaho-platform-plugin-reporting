@@ -432,8 +432,8 @@ public class ParameterXmlContentHandler {
         maxQueryLimit = isQueryLimitControlEnabled ? NumberUtils.toInt( (String) pm.getPluginSetting( "reporting", "settings/query-limit", "0" ), 0 ) : 0;
       }
       inputs.put( SYS_PARAM_IS_QUERY_CONTROL_ENABLED, isQueryLimitControlEnabled );
-      inputs.put( SYS_PARAM_REPORT_QUERY_LIMIT, report.getQueryLimit() );
-      inputs.put( SYS_PARAM_QUERY_LIMIT, report.getQueryLimit() );
+      inputs.put( SYS_PARAM_REPORT_QUERY_LIMIT, report.getQueryLimit( vr.getParameterValues() ) );
+      inputs.put( SYS_PARAM_QUERY_LIMIT, report.getQueryLimit( vr.getParameterValues() ) );
       inputs.put( SYS_PARAM_MAX_QUERY_LIMIT, maxQueryLimit );
 
 
